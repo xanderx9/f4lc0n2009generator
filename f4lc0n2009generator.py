@@ -10,8 +10,27 @@ from bitcoinaddress import Wallet
 from concurrent.futures import ProcessPoolExecutor
 import time
 import multiprocessing
+import sys
 
-def generate_key():
+def generate_key(private_key_hex=None):
+    if private_key_hex:
+        wallet = Wallet(private_key_hex)
+        addresses = {
+            "Uncompressed Bitcoin address": wallet.address.mainnet.pubaddr1,
+            "Compressed Bitcoin address": wallet.address.mainnet.pubaddr1c,
+            "P2SH-Segwit Bitcoin address": wallet.address.mainnet.pubaddr3,
+            "Bech32 Bitcoin address P2WPKH": wallet.address.mainnet.pubaddrbc1_P2WPKH
+        }
+        wif = wallet.key.mainnet.wif
+        wifc = wallet.key.mainnet.wifc
+
+        return {
+            "Private key in 64-character hexadecimal format": private_key_hex,
+            "Privatekey Uncompressed": wif,
+            "Privatekey compressed": wifc,
+            **addresses
+        }
+
     ip_ranges = [
         ipaddress.IPv4Network("192.168.1.0/28"),
     ]
@@ -43,13 +62,14 @@ def generate_key():
         "Uncompressed Bitcoin address": wallet.address.mainnet.pubaddr1,
         "Compressed Bitcoin address": wallet.address.mainnet.pubaddr1c,
         "P2SH-Segwit Bitcoin address": wallet.address.mainnet.pubaddr3,
-        "Bech32 Bitcoin address P2WPKH": wallet.address.mainnet.pubaddrbc1_P2WPKH    }
+        "Bech32 Bitcoin address P2WPKH": wallet.address.mainnet.pubaddrbc1_P2WPKH
+    }
     wif = wallet.key.mainnet.wif
     wifc = wallet.key.mainnet.wifc
 
     return {
         "Random date and time in 2009 for entropy": random_datetime,
-        "Total RAM in 2009 (in bytes)": total_ram,
+        "Total RAM in 2009 (in bytes)": total_ram,  
         "Simulated memory usage by Bitcoin Core (in bytes)": memory_usage,
         "Simulated CPU load in 2009 (in percentage)": cpu_load,
         "Simulated process ID in 2009": process_id,
@@ -61,34 +81,12 @@ def generate_key():
         **addresses
     }
 
-"""
-#for test 12M4p2tizp12ryx93BTso8yxbPPPnCNA87 1NprETPuXnDFELfxL6trvk1AFsDxYuKgze 3HT3LeupKE8DgjkiyBwt9R2vg1xmJSacKR bc1qaan5nkprqgxkjz20znlwzcvyk7ze6v9zp45w7j
-def generate_key():
-    private_key_hex = "8ec7083bb445b1414d540fa0c07d0ef3db98bd95c64b51e4cc3e2eec8dcb86c5"
-    wallet = Wallet(private_key_hex)
-    addresses = {
-        "Uncompressed Bitcoin address": wallet.address.mainnet.pubaddr1,
-        "Compressed Bitcoin address": wallet.address.mainnet.pubaddr1c,
-        "P2SH-Segwit Bitcoin address": wallet.address.mainnet.pubaddr3,
-        "Bech32 Bitcoin address P2WPKH": wallet.address.mainnet.pubaddrbc1_P2WPKH
-    }
-    wif = wallet.key.mainnet.wif
-    wifc = wallet.key.mainnet.wifc
-
-    return {
-        "Private key in 64-character hexadecimal format": private_key_hex,
-        "Privatekey Uncompressed": wif,
-        "Privatekey compressed": wifc,
-        **addresses
-    }
-
-"""
-
 
 def print_key_info(result):
     for key, value in result.items():
         print(key + ":", value)
     print()
+
 
 def save_matching_address(result):
     with open("WINNER.TXT", "a") as file:
@@ -97,7 +95,15 @@ def save_matching_address(result):
             file.write(key + ": " + str(value) + "\n")
         file.write("\n")
 
+
 if __name__ == '__main__':
+
+    print(".########.##........##........######....#####...##....##\n.##.......##....##..##.......##....##..##...##..###...##\n.##.......##....##..##.......##.......##.....##.####..##\n.######...##....##..##.......##.......##.....##.##.##.##\n.##.......#########.##.......##.......##.....##.##..####\n.##.............##..##.......##....##..##...##..##...###\n.##.............##..########..######....#####...##....##")
+    print("Donate: 1FALCoN194bPQELKGxz2vdZyrPRoSVxGmR" )
+    print("f4lc0n2009generator - Bitcoin private keys V1.1" )
+    print("http://f4lc0n.com" )
+    print()
+
     multiprocessing.freeze_support()
     num_processors = multiprocessing.cpu_count()
     executor = ProcessPoolExecutor(max_workers=num_processors)
@@ -115,16 +121,32 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    while True:
-        futures = [executor.submit(generate_key) for _ in range(num_processors)]
-        count += len(futures)
-        for future in futures:
-            result = future.result()
+    if len(sys.argv) > 1 and sys.argv[1] == '-pv' and len(sys.argv) > 2:
+        private_key_hex = sys.argv[2]
+        while True:
+            result = generate_key(private_key_hex)
             if show_detailed_info:
                 print_key_info(result)
             if any(result[address] in puzzle_addresses for address in ["Compressed Bitcoin address", "Uncompressed Bitcoin address", "P2SH-Segwit Bitcoin address", "Bech32 Bitcoin address P2WPKH"]):
                 save_matching_address(result)
+            count += 1
+            if not show_detailed_info and count % 1234 == 0:
+                elapsed_time = time.time() - start_time
+                generation_rate = count / elapsed_time * 4
+                print(f"\rTotal keys generated: {count}, Total addresses generated: {count * 4}, Elapsed time: {elapsed_time:.2f} seconds, Generation rate: {generation_rate:.2f} addresses/s", end="")
 
-        if not show_detailed_info and count % 1234 == 0:
-            generation_rate = count / (time.time() - start_time) * 4
-            print(f"\rTotal keys generated: {count}, Generation rate per second: {generation_rate:.2f} addresses/s", end="")
+    else:
+        while True:
+            futures = [executor.submit(generate_key) for _ in range(num_processors)]
+            count += len(futures)
+            for future in futures:
+                result = future.result()
+                if show_detailed_info:
+                    print_key_info(result)
+                if any(result[address] in puzzle_addresses for address in ["Compressed Bitcoin address", "Uncompressed Bitcoin address", "P2SH-Segwit Bitcoin address", "Bech32 Bitcoin address P2WPKH"]):
+                    save_matching_address(result)
+
+            if not show_detailed_info and count % 1234 == 0:
+                elapsed_time = time.time() - start_time
+                generation_rate = count / elapsed_time * 4
+                print(f"\rKeys generated: {count}, Addresses generated: {count * 4}, Elapsed time: {elapsed_time:.2f} seconds, Generation rate: {generation_rate:.2f} addresses/s", end="")
