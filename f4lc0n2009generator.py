@@ -81,14 +81,23 @@ def generate_key():
         "Privatekey compressed": wifc,
         **addresses
     }
+
 """
 
 
+def print_key_info(result):
+    for key, value in result.items():
+        print(key + ":", value)
+    print()
+
+def save_matching_address(result):
+    with open("WINNER.TXT", "a") as file:
+        file.write("Matching address found:\n")
+        for key, value in result.items():
+            file.write(key + ": " + str(value) + "\n")
+        file.write("\n")
+
 if __name__ == '__main__':
-    print(".########.##........##........######....#####...##....##\n.##.......##....##..##.......##....##..##...##..###...##\n.##.......##....##..##.......##.......##.....##.####..##\n.######...##....##..##.......##.......##.....##.##.##.##\n.##.......#########.##.......##.......##.....##.##..####\n.##.............##..##.......##....##..##...##..##...###\n.##.............##..########..######....#####...##....##")
-    print("Donate: 1FALCoN194bPQELKGxz2vdZyrPRoSVxGmR" )
-    print("simulator configurations 2009 GENERATION BTC V1" )
-    print("http://f4lc0n.com" )
     multiprocessing.freeze_support()
     num_processors = multiprocessing.cpu_count()
     executor = ProcessPoolExecutor(max_workers=num_processors)
@@ -101,20 +110,21 @@ if __name__ == '__main__':
     num_puzzle_addresses = len(puzzle_addresses)
     print("Number of addresses loaded from puzzle.txt:", num_puzzle_addresses)
     count = 0
+
+    show_detailed_info = input("Do you want to see detailed information? (y/n): ").lower() == 'y'
+
+    start_time = time.time()
+
     while True:
         futures = [executor.submit(generate_key) for _ in range(num_processors)]
         count += len(futures)
         for future in futures:
             result = future.result()
-            for key, value in result.items():
-                print(key + ":", value)
-            print()
+            if show_detailed_info:
+                print_key_info(result)
             if any(result[address] in puzzle_addresses for address in ["Compressed Bitcoin address", "Uncompressed Bitcoin address", "P2SH-Segwit Bitcoin address", "Bech32 Bitcoin address P2WPKH"]):
-                with open("WINNER.TXT", "a") as file:
-                    file.write("Matching address found:\n")
-                    for key, value in result.items():
-                        file.write(key + ": " + str(value) + "\n")
-                    file.write("\n")
-    generation_rate = count / (time.time() - start_time)
-    print("Total keys generated:", count)
-    print("Generation rate per second:", generation_rate)
+                save_matching_address(result)
+
+        if not show_detailed_info and count % 1234 == 0:
+            generation_rate = count / (time.time() - start_time) * 4
+            print(f"\rTotal keys generated: {count}, Generation rate per second: {generation_rate:.2f} addresses/s", end="")
