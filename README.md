@@ -2,10 +2,10 @@
 This project presents a unique Bitcoin private key simulator that is based on features and configurations of the computing environment of 2009, the year of Bitcoin's launch. The main objective is to explore and generate possible Bitcoin private keys that could have been created in the early days of the cryptocurrency.
 
 You just have to execute and that's all:
-  python f4lc0n2009generator.py
+ <br> python f4lc0n2009generator.py<br>
 
 But if you want to carry out a test with a known private key, you can put the one you want to validate the correct operation of the code, for example:
-python f4lc0n2009generator.py -pv 8ec7083bb445b1414d540fa0c07d0ef3db98bd95c64b51e4cc3e2eec8dcb86c5
+<br> python f4lc0n2009generator.py -pv 8ec7083bb445b1414d540fa0c07d0ef3db98bd95c64b51e4cc3e2eec8dcb86c5<br>
 this is only to generate the corresponding addresses of that private key and check the match, you must have the addresses of that private key saved in your comparison txt file to generate the match
 
 <!DOCTYPE html>
